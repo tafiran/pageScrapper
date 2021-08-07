@@ -25,105 +25,67 @@ class url():
         with open("file.html", "wb") as file:
             file.write(self.prettySoup)
 
-class Struct():
+# CLASS FOR CREATING FOLDER STRUCTURE
+class Structure():
 
-    def __init__(self):
+    def __init__(self, config):
 
-        self.config = {
-            'folder': 'upload',
-            'assets': 'assets',
-            'styles': 'css',
-            'scripts': 'scripts',
-            'media': 'images',
-            'start': 'index.html'
-        }
+        self.config = config
 
         self.mainFolder = self.config['folder']
-        self.fullIgnore = ['.git', '.idea']
-        self.iList = ['folder', 'start', 'assets']
-        self.ignore = [self.config[self.iList[i]] for i in range(len(self.iList))]
-        self.assets = ['styles', 'scripts', 'media']
-        self.asset = [self.config[self.assets[i]] for i in range(len(self.assets))]
+        self.assetFolder = self.config['assets']
+
+        self.list = {
+            'ignore': ['.git', '.idea'],
+            'main': ['folder', 'start', 'assets']
+        }
 
         self.checkAllFolders()
 
     def checkAllFolders(self):
 
-        bar = Bar('Creating structure', max=4)
+        self.createMainFolder()
+        self.createAssetsFolder()
+        self.createAssetInnerFolders()
+        self.deleteOtherExcessFolders()
 
-        self.mFolder()
-        bar.next()
+    # creating main page folder
+    def createMainFolder(self):
+        self.createDirectory(self.mainFolder)
 
-        self.assetsFolder()
-        bar.next()
+    # creating asset folder
+    def createAssetsFolder(self):
+        self.createDirectory(f'./{self.mainFolder}/{self.assetFolder}')
 
-        self.assetInnerFolders()
-        bar.next()
-
-        self.deleteMoreFolders()
-        bar.next()
-        bar.finish()
-
-
-
-
-    def mFolder(self):
-
-        bar = Bar('Creating main folder', max=1)
-
-        # creating main page folder
-        mainFolder = self.config['folder']
-        self.createDirectory(mainFolder)
-
-        bar.next()
-        bar.finish()
-
-    def assetsFolder(self):
-
-        bar = Bar('Creating asset folder', max=1)
-
-        # creating assets folder
-        assetFolder = self.config['assets']
-        self.createDirectory(f'./{self.mainFolder}/{assetFolder}')
-
-        bar.next()
-        bar.finish()
-
-    def assetInnerFolders(self):
-
-        assetFolder = self.config['assets']
-
-        progress = Bar('Creating folders in assets pack', max=3)
-
+    # full asset folder the structure of page
+    def createAssetInnerFolders(self):
         for fold in self.config:
+            if fold not in self.list['main']:
+                self.createDirectory(f'./{self.mainFolder}/{self.assetFolder}/{self.config[fold]}')
 
-            if fold not in self.iList:
-                self.createDirectory(f'./{self.mainFolder}/{assetFolder}/{self.config[fold]}')
+    # delete excess folders
+    def deleteOtherExcessFolders(self):
 
-            progress.next()
+        # getting list of folders in pack
+        def packs(path):
+            return [f for f in listdir(path) if not isfile(join(path, f))]
 
-        progress.finish()
-
-    def packs(self, path):
-        return [f for f in listdir(path) if not isfile(join(path, f))]
-
-    def deleteMoreFolders(self):
-
-        assetFolder = self.config['assets']
-
-        for fold in self.packs('.'):
-            if fold != self.mainFolder and fold not in self.fullIgnore:
+        # clear folders in root folder
+        for fold in packs('.'):
+            if fold != self.mainFolder and fold not in self.list['ignore']:
                 rmtree(fold)
 
-        for fold in self.packs(f'./{self.mainFolder}'):
-            if fold != assetFolder and fold not in self.fullIgnore:
+        # clear folders in main page folder
+        for fold in packs(f'./{self.mainFolder}'):
+            if fold != self.assetFolder and fold not in self.list['ignore']:
                 rmtree(f'./{self.mainFolder}/{fold}')
 
-        for fold in self.packs(f'./{self.mainFolder}/{assetFolder}'):
-            if fold not in self.asset and fold not in self.fullIgnore:
-                rmtree(f'./{self.mainFolder}/{assetFolder}/{fold}')
+        # clear folders in asset folder
+        for fold in packs(f'./{self.mainFolder}/{self.assetFolder}'):
+            if fold not in self.asset and fold not in self.list['ignore']:
+                rmtree(f'./{self.mainFolder}/{self.assetFolder}/{fold}')
 
-    # CREATING FOLDER
+    # creating folder if not exists
     def createDirectory(self, folder):
 
         # true if folder not exists
@@ -140,6 +102,17 @@ class Struct():
 class App():
 
     def __init__(self):
-        self.appStruct = Struct()
+
+        self.appStruct = Structure({'folder': 'upload', 'assets': 'assets',
+                                 'styles': 'css', 'scripts': 'scripts', 'media': 'images', 'start': 'index.html'})
+
+        app = self.appStruct.config
+
+        self.mainFolder, self.assetFolder = app['folder'], app['assets']
+        self.style, self.script, self.media = app['styles'], app['scripts'], app['media']
+        self.start = app['start']
+
+
+
 
 App()
